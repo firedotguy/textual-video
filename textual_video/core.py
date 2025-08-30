@@ -1,0 +1,119 @@
+from pathlib import Path
+from PIL import Image
+import av
+
+from .metadata import VideoMetadata
+from .enums import ImageType
+from .utils import image_type_to_widget, IMAGES_WIDGET_TYPE
+
+def _frame_to_pil(frame) -> Image.Image:
+    """
+    Convert PyAV VideoFrame -> PIL.Image (RGB).
+    """
+    arr = frame.to_ndarray(format="rgb24")  # H, W, 3 (RGB)
+    return Image.fromarray(arr)
+
+
+def frames_from_video_pyav(
+    video_path: str | Path,
+    resize: tuple[int, int] | None = None,
+    start_sec: float = 0.0,
+) -> list[Image.Image]:
+    """
+    Read frames from video using PyAV and return list of PIL.Image.
+
+    Args:
+      video_path: path to video file
+      resize: optional (width, height) to resize each frame (PIL)
+      start_sec: skip frames before this second (best-effort)
+
+    Notes:
+      - Sampling by target_fps is implemented by skipping frames according to
+        source average rate (stream.average_rate). It's an approximation.
+    """
+    container = av.open(str(video_path))
+    try:
+        # find first video stream
+        if not container.streams.video:
+            raise RuntimeError("No video stream found in file")
+        vs = container.streams.video[0]
+
+        src_fps = None
+        try:
+            src_fps = float(vs.average_rate) if vs.average_rate is not None else None
+        except Exception:
+            src_fps = None
+
+        step = 1
+
+        # compute start frame index (approx) if possible
+        start_frame_idx = int(start_sec * src_fps) if (start_sec and src_fps) else 0
+
+        result: list[Image.Image] = []
+        decoded_idx = 0  # index of decoded frames for the stream
+        taken = 0
+
+        # iterate decoded frames (clean and simple)
+        for frame in container.decode(video=0):
+            # frame.pts / time may be None; we just count decoded frames
+            if decoded_idx < start_frame_idx:
+                decoded_idx += 1
+                continue
+
+            if (decoded_idx % step) == 0:
+                pil = _frame_to_pil(frame)
+                if resize:
+                    pil = pil.resize(resize, Image.Resampling.LANCZOS)
+                result.append(pil)
+                taken += 1
+
+            decoded_idx += 1
+
+        return result
+    finally:
+        container.close()
+
+
+def pil_list_to_widgets(pil_list: list[Image.Image], type: ImageType, kwargs: dict | None = None) -> list[IMAGES_WIDGET_TYPE]:
+    """
+    Convert list of PIL.Images into list of SixelImage instances.
+
+    Assumes SixelImage can be constructed from PIL.Image (most common).
+    Forward sixel_kwargs to constructor when provided.
+    """
+    kw = kwargs or {}
+    images: list = []
+    for pil in pil_list:
+        # typical constructor: SixelImage(pil) or SixelImage.from_pil(...)
+        # We call the constructor directly; if your version of textual_image
+        # uses another API, адаптируй вызов сюда.
+        si = image_type_to_widget(type)(pil, **kw)
+        images.append(si)
+    return images
+
+
+def get_video_metadata(video_path: str | Path) -> VideoMetadata:
+    container = av.open(str(video_path))
+    vs = container.streams.video[0]
+    container.close()
+    return VideoMetadata(float(vs.average_rate or 0), float((vs.duration or 0) * (vs.time_base or 0)), vs.frames, vs.width, vs.height)
+
+
+def video_to_sixel(
+    video_path: str | Path,
+    type: ImageType = ImageType.SIXEL,
+    resize: tuple[int, int] | None = None,
+    start_sec: float = 0.0,
+    kwargs: dict | None = None,
+) -> list[IMAGES_WIDGET_TYPE]:
+    """
+    High-level helper: returns list of dicts:
+
+    If you only need the PIL images, use frames_from_video_pyav directly.
+    """
+    pil_frames = frames_from_video_pyav(
+        video_path,
+        resize=resize,
+        start_sec=start_sec,
+    )
+    return pil_list_to_widgets(pil_frames, type, kwargs=kwargs)
