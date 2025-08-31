@@ -2,7 +2,6 @@ from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.events import Mount
-from textual.geometry import Size
 from textual.widget import Widget
 from textual.containers import Container
 from textual.widgets import Static
@@ -11,7 +10,7 @@ from textual import log
 from textual.reactive import reactive
 
 from .core import get_video_metadata, video_to_sixel
-from .utils import textual_to_pil_sizes, pil_to_textual_sizes
+from .utils import textual_to_pil_sizes, pil_to_textual_sizes, image_type_to_widget
 from .enums import ImageType, UpdateStrategy
 
 
@@ -68,4 +67,4 @@ class VideoPlayer(Widget):
         elif self.update_strategy == UpdateStrategy.REMOUNT:
             yield Container()
         else:
-            yield SixelImage()
+            yield image_type_to_widget(self.image_type)()
