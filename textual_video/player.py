@@ -14,6 +14,7 @@ from textual.reactive import reactive
 from .core import get_video_metadata, video_to_sixel
 from .utils import textual_to_pil_sizes, pil_to_textual_sizes, image_type_to_widget, get_render_delay
 from .enums import ImageType, UpdateStrategy
+from .controls import PlayerControls
 
 
 class VideoPlayer(Widget):
@@ -21,6 +22,7 @@ class VideoPlayer(Widget):
     def __init__(
         self,
         path: str | Path,
+        controls: PlayerControls = PlayerControls(),
         image_type: ImageType = ImageType.SIXEL,
         speed: float = 1,
         on_update: Callable[[int], Any] = lambda frame: None,
@@ -29,22 +31,27 @@ class VideoPlayer(Widget):
         fps_decrease_factor: int = 1
     ):
         super().__init__()
-        self.video_path = path if type(path) == Path else Path(path)
-        assert self.video_path.exists(), f'Video {self.video_path} is not exists.'
+        path = Path(path)
+        assert path.exists(), f'Video {path} is not exists.'
+        assert render_delay == None or render_delay >= 0, 'Render delay should be greater than 0.'
+
+        self.video_path = path
+        self.controls = controls
+        if update_strategy == UpdateStrategy.REACTIVE: self.controls._should_refresh = False
         self.current_frame_index = 0
         self.image_type = image_type
         self.speed = speed
         self.on_frame_update = on_update
         self.update_strategy = update_strategy
         self.fps_descrease_factor = fps_decrease_factor
-
-        assert render_delay == None or render_delay >= 0, 'Render delay should be greater than 0.'
         self.render_delay = render_delay or get_render_delay(image_type)
 
         self.metadata = get_video_metadata(self.video_path)
+        self.controls.metadata = self.metadata
         self._start = time()
 
-        self.styles.width, self.styles.height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
+        self.styles.width = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)[0]
+        self.styles.height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)[1] + 1 #space for controls
 
     def on_mount(self, event: Mount) -> None:
         self.frames = video_to_sixel(self.video_path, type=self.image_type)
@@ -59,6 +66,7 @@ class VideoPlayer(Widget):
     def update_frame_index(self):
         if self.metadata.frame_count > self.current_frame_index + 1:
             self.current_frame_index += 1
+            self.controls.frame = self.current_frame_index
             self._replace_frame_widget(self.current_frame_index)
         # else:
         #     log(time() - self._start, self.metadata.duration)
@@ -83,3 +91,4 @@ class VideoPlayer(Widget):
             yield Container()
         else:
             yield image_type_to_widget(self.image_type)()
+        yield self.controls

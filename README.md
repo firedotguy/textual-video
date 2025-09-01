@@ -8,7 +8,7 @@ Textual widget for playing videos in terminal UIs. Based on [textual-image](http
 ### Dependencies
  - Textual
  - Textual-image
- > NOTE: use [patched fork](https://github.com/firedotguy/textual-image/) of `textual-image` to avoid `NoScreen` errors.
+ > NOTE: use [patched fork](https://github.com/firedotguy/textual-image/tree/fix-no-screen-error) of `textual-image` to avoid `NoScreen` errors.
 
  - av
  - numpy
@@ -50,3 +50,7 @@ Image updating strategy
 | `UpdateStrategy.REMOUNT`   | Create/mount a new widget for each frame and remove the old. Simple but slow and can flicker.   |
 | `UpdateStrategy.REACTIVE`  | Update a reactive field on the player and call `refresh(recompose=True)`. Medium cost.          |
 | `UpdateStrategy.SET_IMAGE` | Keep one mounted widget and call `image` setter. Supports only `ImageType.SIXEL`                |
+
+## Contributing
+ - Please open issues for bugs or feature requests.
+ - Create a PR against main and mention related issues.

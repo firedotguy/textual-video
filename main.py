@@ -9,6 +9,7 @@ class ExampleApp(App):
     def compose(self) -> ComposeResult:
         player = VideoPlayer(
             r'examples\video.mp4',
+            image_type=ImageType.UNICODE,
             update_strategy=UpdateStrategy.REACTIVE
         )
         yield player

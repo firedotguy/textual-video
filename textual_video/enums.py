@@ -21,3 +21,17 @@ class UpdateStrategy(Enum):
     REMOUNT = 'remount'
     REACTIVE = 'reactive'
     SET_IMAGE = 'set_image'
+
+class TimeDisplayMode(Enum):
+    """Time displaying mode
+     - youtube: youtube-like displaying (0:03/1:41:03)
+     - seconds: display seconds (3/6060)
+     - milliseconds: display milliseconds (180/363600), may wrong because frame update slower than millisecond
+     - frame_index: display frame_index (81/163120)
+     - hidden: do not display time
+    """
+    YOUTUBE = 'youtube'
+    SECONDS = 'seconds'
+    MILLISECONDS = 'milliseconds'
+    FRAME_INDEX = 'frame-index'
+    HIDDEN = 'hidden'
