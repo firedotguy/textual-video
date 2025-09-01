@@ -12,7 +12,7 @@ class VideoMetadata:
 
     def decrease_fps(self, factor: int, frames: list | None) -> list | None:
         self.fps /= factor
-        self.delay_between_frames = 1 / self.fps
+        self.delay_between_frames *= factor
         if frames != None:
             frames = [frames[i] for i in range(0, len(frames), factor)]
             self.frame_count = len(frames)
