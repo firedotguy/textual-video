@@ -1,5 +1,6 @@
 from pathlib import Path
 from time import time
+from typing import Callable, Any
 
 from textual.app import ComposeResult
 from textual.events import Mount
@@ -22,6 +23,7 @@ class VideoPlayer(Widget):
         path: str | Path,
         image_type: ImageType = ImageType.SIXEL,
         speed: float = 1,
+        on_update: Callable[[int], Any] = lambda frame: None,
         update_strategy: UpdateStrategy = UpdateStrategy.REACTIVE,
         render_delay: float | None = None,
         fps_decrease_factor: int = 1
@@ -32,10 +34,13 @@ class VideoPlayer(Widget):
         self.current_frame_index = 0
         self.image_type = image_type
         self.speed = speed
+        self.on_frame_update = on_update
         self.update_strategy = update_strategy
         self.fps_descrease_factor = fps_decrease_factor
+
         assert render_delay == None or render_delay >= 0, 'Render delay should be greater than 0.'
         self.render_delay = render_delay or get_render_delay(image_type)
+
         self.metadata = get_video_metadata(self.video_path)
         self._start = time()
 
@@ -46,7 +51,6 @@ class VideoPlayer(Widget):
         if self.fps_descrease_factor > 1:
             self.frames = self.metadata.decrease_fps(self.fps_descrease_factor, self.frames) or []
 
-        log(self.metadata.frame_count)
         assert self.metadata.delay_between_frames / self.speed - self.render_delay > 0, 'Render delay should be less than ' + \
             str(self.metadata.delay_between_frames / self.speed) + '.'
         self.set_interval(self.metadata.delay_between_frames / self.speed - self.render_delay, self.update_frame_index)
@@ -56,10 +60,11 @@ class VideoPlayer(Widget):
         if self.metadata.frame_count > self.current_frame_index + 1:
             self.current_frame_index += 1
             self._replace_frame_widget(self.current_frame_index)
-        else:
-            log(time() - self._start, self.metadata.duration, self.metadata.frame_count * self.metadata.delay_between_frames)
+        # else:
+        #     log(time() - self._start, self.metadata.duration)
 
     def _replace_frame_widget(self, idx: int) -> None:
+        self.on_frame_update(self.current_frame_index)
         if self.update_strategy == UpdateStrategy.REACTIVE:
             self.frame = self.frames[idx]
             self.refresh(recompose=True)
