@@ -51,6 +51,16 @@ Image updating strategy
 | `UpdateStrategy.REACTIVE`  | Update a reactive field on the player and call `refresh(recompose=True)`. Medium cost.          |
 | `UpdateStrategy.SET_IMAGE` | Keep one mounted widget and call `image` setter. Supports only `ImageType.SIXEL`                |
 
+## FAQ
+1. Video does not start from the beginning, but from the middle or from the end
+ - Try incrase `fps_decrease_factor` - your terminal can't cope with frequent changes (escpecially with `ImageType.SIXEL`)
+ - Change `ImageType` to more faster (like `HALFCELL`)
+2. Video lagging (has black gaps between update)
+ - Use `UpdateStrategy.REACTIVE`
+ - Change `ImageType` to more faster
+3. Is there any ways to provide customer control?
+ - Сreate a new class inheriting from `textual_video.controls.PlayerControls` and provide it in `control` argument in `VideoPlayer`
+
 ## Contributing
  - Please open issues for bugs or feature requests.
  - Create a PR against main and mention related issues.
