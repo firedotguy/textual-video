@@ -11,14 +11,16 @@ from textual_image.widget import SixelImage
 from textual import log
 from textual.reactive import reactive
 
-from .core import get_video_metadata, video_to_sixel
+from .core import get_video_metadata, video_to_widgets
 from .utils import textual_to_pil_sizes, pil_to_textual_sizes, image_type_to_widget, get_render_delay
 from .enums import ImageType, UpdateStrategy
 from .controls import PlayerControls
 
 
 class VideoPlayer(Widget):
+    """Base VideoPlayer widget."""
     frame = reactive(None)
+
     def __init__(
         self,
         path: str | Path,
@@ -30,6 +32,18 @@ class VideoPlayer(Widget):
         render_delay: float | None = None,
         fps_decrease_factor: int = 1
     ):
+        """Create new VideoPlayer.
+
+        Args:
+            path (str | Path): Path to video.
+            controls (PlayerControls, optional): Player controls. Defaults to PlayerControls().
+            image_type (ImageType, optional): Image rendering type. Defaults to ImageType.SIXEL.
+            speed (float, optional): Video speed. Defaults to 1.
+            on_update (_type_, optional): Video update callback. Defaults to None.
+            update_strategy (UpdateStrategy, optional): Image update strategy. Defaults to UpdateStrategy.REACTIVE.
+            render_delay (float | None, optional): Average time to render an image. Defaults to None.
+            fps_decrease_factor (int, optional): FPS decreasing factor. Defaults to 1.
+        """
         super().__init__()
         path = Path(path)
         assert path.exists(), f'Video {path} is not exists.'
@@ -55,7 +69,7 @@ class VideoPlayer(Widget):
         self.styles.height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)[1] + 1 #space for controls
 
     def on_mount(self, event: Mount) -> None:
-        self.frames = video_to_sixel(self.video_path, type=self.image_type)
+        self.frames = video_to_widgets(self.video_path, type=self.image_type)
         if self.fps_descrease_factor > 1:
             self.frames = self.metadata.decrease_fps(self.fps_descrease_factor, self.frames) or []
 

@@ -6,9 +6,16 @@ from .utils import format_time
 from .metadata import VideoMetadata
 
 class PlayerControls(Horizontal):
+    """Base PlayerControls widget."""
     metadata: VideoMetadata | None
 
     def __init__(self, time_display_mode: TimeDisplayMode = TimeDisplayMode.YOUTUBE, _should_refresh: bool = True) -> None:
+        """Cretae new PlayerControls.
+
+        Args:
+            time_display_mode (TimeDisplayMode, optional): Time displaying mode. Defaults to TimeDisplayMode.YOUTUBE.
+            _should_refresh (bool, optional): Should refresh widget after update frame. Set to False if you are using UpdateStrategy.REACTIVE. Defaults to True.
+        """
         super().__init__()
         self.time_display_mode = time_display_mode
         self._frame = 0

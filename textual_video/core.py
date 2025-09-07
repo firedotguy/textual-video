@@ -93,23 +93,38 @@ def pil_list_to_widgets(pil_list: list[Image.Image], type: ImageType, kwargs: di
 
 
 def get_video_metadata(video_path: str | Path) -> VideoMetadata:
+    """Get video metedata.
+
+    Args:
+        video_path (str | Path): Video path.
+
+    Returns:
+        VideoMetadata: Metadata
+    """
     container = av.open(str(video_path))
     vs = container.streams.video[0]
     container.close()
     return VideoMetadata(float(vs.average_rate or 0), float((vs.duration or 0) * (vs.time_base or 0)), vs.frames, vs.width, vs.height)
 
 
-def video_to_sixel(
+def video_to_widgets(
     video_path: str | Path,
     type: ImageType = ImageType.SIXEL,
     resize: tuple[int, int] | None = None,
     start_sec: float = 0.0,
     kwargs: dict | None = None,
 ) -> list[IMAGES_WIDGET_TYPE]:
-    """
-    High-level helper: returns list of dicts:
+    """Convert video to image widgets.
 
-    If you only need the PIL images, use frames_from_video_pyav directly.
+    Args:
+        video_path (str | Path): Video path
+        type (ImageType, optional): Image rendering type. Defaults to ImageType.SIXEL.
+        resize (tuple[int, int] | None, optional): Resizing. Defaults to None.
+        start_sec (float, optional): Start. Defaults to 0.0.
+        kwargs (dict | None, optional): Keyword arguments for Image widgets. Defaults to None.
+
+    Returns:
+        list[IMAGES_WIDGET_TYPE]: Image widgets
     """
     pil_frames = frames_from_video_pyav(
         video_path,

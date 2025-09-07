@@ -2,10 +2,10 @@ from textual_image.widget import SixelImage, UnicodeImage, TGPImage, HalfcellIma
 from textual import log
 from .enums import ImageType, TimeDisplayMode
 
-#Textual-image widget types
+# Textual-image widget types
 IMAGES_WIDGET_TYPE = SixelImage | UnicodeImage | TGPImage | HalfcellImage
 
-#Map of render delays for image types
+# Map of render delays for image types (values for Windows PowerShell, can vary in different terminals)
 RENDER_DELAY = {
     ImageType.SIXEL: 0.0373,
     ImageType.HALFCELL: 0.01065,
