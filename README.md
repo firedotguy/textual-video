@@ -6,10 +6,8 @@ Textual widget for playing videos in terminal UIs. Based on [textual-image](http
 > PyPI release soon. Now just clone repo.
 
 ### Dependencies
- - Textual
- - Textual-image
- > NOTE: use [patched fork](https://github.com/firedotguy/textual-image/tree/fix-no-screen-error) of `textual-image` to avoid `NoScreen` errors.
-
+ - textual
+ - textual-image
  - av
  - numpy
 

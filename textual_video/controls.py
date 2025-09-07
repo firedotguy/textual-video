@@ -27,7 +27,7 @@ class PlayerControls(Horizontal):
         if self._should_refresh:
             self.refresh(recompose=True)
 
-    def get_content_width(self, _: Size, __: Size) -> int:
+    def get_content_width(self, container: Size, viewport: Size) -> int:
         assert self.metadata != None, 'provide metadata before get content width'
         return self.metadata.size.width
 
