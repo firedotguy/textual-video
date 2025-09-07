@@ -49,6 +49,7 @@ class VideoPlayer(Widget):
         self.metadata = get_video_metadata(self.video_path)
         self.controls.metadata = self.metadata
         self._start = time()
+        self.paused = False
 
         self.styles.width = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)[0]
         self.styles.height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)[1] + 1 #space for controls
@@ -58,18 +59,18 @@ class VideoPlayer(Widget):
         if self.fps_descrease_factor > 1:
             self.frames = self.metadata.decrease_fps(self.fps_descrease_factor, self.frames) or []
 
-        assert self.metadata.delay_between_frames / self.speed - self.render_delay > 0, 'Render delay should be less than ' + \
-            str(self.metadata.delay_between_frames / self.speed) + '.'
-        self.set_interval(self.metadata.delay_between_frames / self.speed - self.render_delay, self.update_frame_index)
+        assert self.metadata.delay_between_frames / self.speed - self.render_delay > 0, \
+            f'Render delay should be less than {self.metadata.delay_between_frames / self.speed}.'
+        self.timer = self.set_interval(self.metadata.delay_between_frames / self.speed - self.render_delay, self._update_frame_index)
         self._replace_frame_widget(0)
 
-    def update_frame_index(self):
+    def _update_frame_index(self):
         if self.metadata.frame_count > self.current_frame_index + 1:
             self.current_frame_index += 1
             self.controls.frame = self.current_frame_index
             self._replace_frame_widget(self.current_frame_index)
-        # else:
-        #     log(time() - self._start, self.metadata.duration)
+        else:
+            self.pause()
 
     def _replace_frame_widget(self, idx: int) -> None:
         self.on_frame_update(self.current_frame_index)
@@ -83,6 +84,22 @@ class VideoPlayer(Widget):
         else:
             image = self.query_one(SixelImage)
             image.image = self.frames[idx].image
+
+    def play(self) -> None:
+        """Play/resume video."""
+        if self.current_frame_index == self.metadata.frame_count:
+            self.current_frame_index = 0 # start from the beginning
+        self.timer.resume()
+        self.paused = False
+
+    def pause(self) -> None:
+        """Pause/stop video."""
+        self.timer.pause()
+        self.paused = True
+
+    def _toggle_pause(self) -> None:
+        if self.paused: self.play()
+        else: self.pause()
 
     def compose(self) -> ComposeResult:
         if self.update_strategy == UpdateStrategy.REACTIVE:
