@@ -3,13 +3,14 @@ from time import time
 from typing import Callable, Any
 
 from textual.app import ComposeResult
-from textual.events import Mount
+from textual.events import Key, Mount
 from textual.widget import Widget
 from textual.containers import Container
 from textual.widgets import Static
 from textual_image.widget import SixelImage
-from textual import log
+from textual.binding import Binding
 from textual.reactive import reactive
+from textual import log
 
 from .core import get_video_metadata, video_to_widgets
 from .utils import textual_to_pil_sizes, pil_to_textual_sizes, image_type_to_widget, get_render_delay
@@ -20,6 +21,8 @@ from .controls import PlayerControls
 class VideoPlayer(Widget):
     """Base VideoPlayer widget."""
     frame = reactive(None)
+    BINDINGS = [Binding('space', 'toggle_pause')]
+    can_focus = True
 
     def __init__(
         self,
@@ -101,7 +104,7 @@ class VideoPlayer(Widget):
 
     def play(self) -> None:
         """Play/resume video."""
-        if self.current_frame_index == self.metadata.frame_count:
+        if self.current_frame_index == self.metadata.frame_count - 1:
             self.current_frame_index = 0 # start from the beginning
         self.timer.resume()
         self.paused = False
@@ -111,7 +114,8 @@ class VideoPlayer(Widget):
         self.timer.pause()
         self.paused = True
 
-    def _toggle_pause(self) -> None:
+    def action_toggle_pause(self) -> None:
+        log('toggle pause')
         if self.paused: self.play()
         else: self.pause()
 

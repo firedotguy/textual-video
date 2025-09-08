@@ -1,4 +1,5 @@
 from textual.geometry import Size
+from textual import log
 
 class VideoMetadata:
     """Video metadata class"""

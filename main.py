@@ -5,11 +5,10 @@ from textual_video.enums import ImageType, UpdateStrategy
 from textual import log
 
 class ExampleApp(App):
-
     def compose(self) -> ComposeResult:
         player = VideoPlayer(
             r'examples\video.mp4',
-            image_type=ImageType.SIXEL,
+            image_type=ImageType.HALFCELL,
             update_strategy=UpdateStrategy.REACTIVE,
             fps_decrease_factor=2
         )

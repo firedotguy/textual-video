@@ -37,10 +37,11 @@ if __name__ == '__main__':
 Image rendering type
 | Member               | Description                                                                             |
 | -------------------- | --------------------------------------------------------------------------------------- |
-| `ImageType.SIXEL`    | Highest fidelity; requires terminal sixel support; best for `SET_IMAGE`.                |
+| `ImageType.SIXEL`    | Highest fidelity; requires terminal sixel support.                                      |
 | `ImageType.TGP`      | Mid-quality option (depends on implementation).                                         |
 | `ImageType.HALFCELL` | Fast; uses half-cell Unicode blocks.                                                    |
 | `ImageType.UNICODE`  | Fastest; low fidelity, widest compatibility.                                            |
+
 #### UpdateStrategy
 Image updating strategy
 | Member                     | Description                                                                                     |
