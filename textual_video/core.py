@@ -7,9 +7,7 @@ from .enums import ImageType
 from .utils import image_type_to_widget, IMAGES_WIDGET_TYPE
 
 def _frame_to_pil(frame) -> Image.Image:
-    """
-    Convert PyAV VideoFrame -> PIL.Image (RGB).
-    """
+    """Convert PyAV VideoFrame -> PIL.Image (RGB)."""
     arr = frame.to_ndarray(format="rgb24")  # H, W, 3 (RGB)
     return Image.fromarray(arr)
 
@@ -33,62 +31,35 @@ def frames_from_video_pyav(
     """
     container = av.open(str(video_path))
     try:
-        # find first video stream
-        if not container.streams.video:
-            raise RuntimeError("No video stream found in file")
         vs = container.streams.video[0]
 
-        src_fps = None
-        try:
-            src_fps = float(vs.average_rate) if vs.average_rate is not None else None
-        except Exception:
-            src_fps = None
-
-        step = 1
-
-        # compute start frame index (approx) if possible
+        src_fps = float(vs.average_rate) if vs.average_rate is not None else None
         start_frame_idx = int(start_sec * src_fps) if (start_sec and src_fps) else 0
 
         result: list[Image.Image] = []
         decoded_idx = 0  # index of decoded frames for the stream
-        taken = 0
 
-        # iterate decoded frames (clean and simple)
-        for frame in container.decode(video=0):
-            # frame.pts / time may be None; we just count decoded frames
+        for frame in container.decode(0):
+            decoded_idx += 1
             if decoded_idx < start_frame_idx:
-                decoded_idx += 1
                 continue
 
-            if (decoded_idx % step) == 0:
-                pil = _frame_to_pil(frame)
-                if resize:
-                    pil = pil.resize(resize, Image.Resampling.LANCZOS)
-                result.append(pil)
-                taken += 1
-
-            decoded_idx += 1
+            pil = _frame_to_pil(frame)
+            if resize:
+                pil = pil.resize(resize, Image.Resampling.LANCZOS)
+            result.append(pil)
 
         return result
     finally:
         container.close()
 
 
-def pil_list_to_widgets(pil_list: list[Image.Image], type: ImageType, kwargs: dict | None = None) -> list[IMAGES_WIDGET_TYPE]:
-    """
-    Convert list of PIL.Images into list of SixelImage instances.
-
-    Assumes SixelImage can be constructed from PIL.Image (most common).
-    Forward sixel_kwargs to constructor when provided.
-    """
-    kw = kwargs or {}
+def pil_list_to_widgets(pil_list: list[Image.Image], type: ImageType, kwargs: dict = {}) -> list[IMAGES_WIDGET_TYPE]:
+    """Convert list of PIL.Images into list of Image instances."""
     images: list = []
     for pil in pil_list:
-        # typical constructor: SixelImage(pil) or SixelImage.from_pil(...)
-        # We call the constructor directly; if your version of textual_image
-        # uses another API, адаптируй вызов сюда.
-        si = image_type_to_widget(type)(pil, **kw)
-        images.append(si)
+        img = image_type_to_widget(type)(pil, **kwargs)
+        images.append(img)
     return images
 
 
@@ -112,7 +83,7 @@ def video_to_widgets(
     type: ImageType = ImageType.SIXEL,
     resize: tuple[int, int] | None = None,
     start_sec: float = 0.0,
-    kwargs: dict | None = None,
+    kwargs: dict = {},
 ) -> list[IMAGES_WIDGET_TYPE]:
     """Convert video to image widgets.
 
