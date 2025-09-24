@@ -1,6 +1,5 @@
 from textual_image.widget import SixelImage, UnicodeImage, TGPImage, HalfcellImage
-from textual import log
-from .enums import ImageType, TimeDisplayMode
+from .enums import ImageType, TimeDisplayMode, IconType
 
 # Textual-image widget types
 IMAGES_WIDGET_TYPE = SixelImage | UnicodeImage | TGPImage | HalfcellImage
@@ -67,3 +66,12 @@ def format_time(mode: TimeDisplayMode, frame: int, fps: float, duration: float) 
                 right = f'{duration // 3600}:{_pad_left(duration // 60)}:{_pad_left(duration % 60)}'
 
             return f'{left}/{right}'
+
+def icon_type_to_text(type: IconType, paused: bool = False) -> str:
+    match type:
+        case IconType.NERD:
+            return '\udb81\udc0a' if paused else '\udb80\udfe4'
+        case IconType.ASCII:
+            return '|>' if paused else '||'
+        case IconType.UNICODE:
+            return '▶' if paused else '⏸'

@@ -1,7 +1,7 @@
 from enum import Enum
 
 class ImageType(Enum):
-    """Image rendering type
+    """Image rendering type.
      - sixel (slow)
      - TGP (mid)
      - halfcell (fast)
@@ -13,7 +13,7 @@ class ImageType(Enum):
     UNICODE = 'Unicode'
 
 class UpdateStrategy(Enum):
-    """Update image startegy
+    """Update image startegy.
      - remount: remove_children + mount - slow
      - reactive: update reactive field + refresh with recomposing - mid
      - set_image use textual-image image setter - mid (NOTE: supports only SIXEL ImageType)
@@ -23,7 +23,7 @@ class UpdateStrategy(Enum):
     SET_IMAGE = 'set_image'
 
 class TimeDisplayMode(Enum):
-    """Time displaying mode
+    """Time displaying mode.
      - youtube: youtube-like displaying (0:03/1:41:03)
      - seconds: display seconds (3/6060)
      - milliseconds: display milliseconds (180/363600), may wrong because frame update slower than millisecond
@@ -35,3 +35,11 @@ class TimeDisplayMode(Enum):
     MILLISECONDS = 'milliseconds'
     FRAME_INDEX = 'frame-index'
     HIDDEN = 'hidden'
+
+class IconType(Enum):
+    """Player controls icon type.
+    """
+    NERD = 'nerd'
+    ASCII = 'ascii'
+    EMOJI = 'emoji'
+    UNICODE = 'unicode'

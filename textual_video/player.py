@@ -3,7 +3,7 @@ from time import time
 from typing import Callable, Any
 
 from textual.app import ComposeResult
-from textual.events import Key, Mount
+from textual.events import Mount
 from textual.widget import Widget
 from textual.containers import Container
 from textual.widgets import Static
@@ -21,6 +21,7 @@ from .controls import PlayerControls
 class VideoPlayer(Widget):
     """Base VideoPlayer widget."""
     frame = reactive(None)
+    paused = reactive(False)
     BINDINGS = [Binding('space', 'toggle_pause')]
     can_focus = True
 
@@ -69,7 +70,7 @@ class VideoPlayer(Widget):
         self.paused = False
 
         self.styles.width = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)[0]
-        self.styles.height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)[1] + 1 #space for controls
+        self.styles.height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)[1] + 1 # space for controls
 
     def on_mount(self, event: Mount) -> None:
         self.frames = video_to_widgets(self.video_path, type=self.image_type)
@@ -89,14 +90,21 @@ class VideoPlayer(Widget):
         else:
             self.pause()
 
-    def _replace_frame_widget(self, idx: int) -> None:
-        self.on_frame_update(self.current_frame_index)
+    def _refresh_image(self) -> Container | None:
         if self.update_strategy == UpdateStrategy.REACTIVE:
-            self.frame = self.frames[idx]
             self.refresh(recompose=True)
         elif self.update_strategy == UpdateStrategy.REMOUNT:
             container = self.query_one(Container)
             container.remove_children()
+            return container
+
+    def _replace_frame_widget(self, idx: int) -> None:
+        self.on_frame_update(self.current_frame_index)
+        container = self._refresh_image()
+        if self.update_strategy == UpdateStrategy.REACTIVE:
+            self.frame = self.frames[idx]
+        elif self.update_strategy == UpdateStrategy.REMOUNT:
+            assert container is not None
             container.mount(self.frames[idx])
         else:
             image = self.query_one(SixelImage)
@@ -107,15 +115,18 @@ class VideoPlayer(Widget):
         if self.current_frame_index == self.metadata.frame_count - 1:
             self.current_frame_index = 0 # start from the beginning
         self.timer.resume()
+        self.controls.paused = False
         self.paused = False
+        self._refresh_image()
 
     def pause(self) -> None:
         """Pause/stop video."""
         self.timer.pause()
+        self.controls.paused = True
         self.paused = True
+        self._refresh_image()
 
     def action_toggle_pause(self) -> None:
-        log('toggle pause')
         if self.paused: self.play()
         else: self.pause()
 

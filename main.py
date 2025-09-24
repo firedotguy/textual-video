@@ -1,7 +1,8 @@
 from textual_video.player import VideoPlayer
+from textual_video.controls import PlayerControls
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual_video.enums import ImageType, UpdateStrategy
+from textual_video.enums import ImageType, UpdateStrategy, TimeDisplayMode
 from textual import log
 
 class ExampleApp(App):
@@ -10,7 +11,8 @@ class ExampleApp(App):
             r'examples\video2.mp4',
             image_type=ImageType.HALFCELL,
             update_strategy=UpdateStrategy.REACTIVE,
-            fps_decrease_factor=1
+            fps_decrease_factor=2,
+            controls=PlayerControls(time_display_mode=TimeDisplayMode.SECONDS)
         )
         yield player
 
