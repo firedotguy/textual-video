@@ -70,8 +70,10 @@ def format_time(mode: TimeDisplayMode, frame: int, fps: float, duration: float) 
 def icon_type_to_text(type: IconType, paused: bool = False) -> str:
     match type:
         case IconType.NERD:
-            return '\udb81\udc0a' if paused else '\udb80\udfe4'
+            return '\uf04b' if paused else '\uead1'
         case IconType.ASCII:
             return '|>' if paused else '||'
         case IconType.UNICODE:
             return '▶' if paused else '⏸'
+        case IconType.EMOJI:
+            return '▶️' if paused else '⏸️'

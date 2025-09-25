@@ -6,7 +6,7 @@ from textual.app import ComposeResult
 from textual.events import Mount
 from textual.widget import Widget
 from textual.containers import Container
-from textual.widgets import Static
+from textual.widgets import Static, Button
 from textual_image.widget import SixelImage
 from textual.binding import Binding
 from textual.reactive import reactive
@@ -138,3 +138,6 @@ class VideoPlayer(Widget):
         else:
             yield image_type_to_widget(self.image_type)()
         yield self.controls
+
+    def on_playpausebutton_clicked(self):
+        pass

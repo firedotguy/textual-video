@@ -1,16 +1,19 @@
 from textual.widget import Widget
-from textual.reactive import reactive
 from textual.geometry import Size
 from textual.widgets import Static
-from .enums import TimeDisplayMode
-from .utils import format_time
+from .enums import TimeDisplayMode, IconType
+from .utils import format_time, icon_type_to_text
 from .metadata import VideoMetadata
-from textual import log
 
 class PlayerControls(Widget):
     """Base PlayerControls widget."""
     metadata: VideoMetadata | None
-    def __init__(self, time_display_mode: TimeDisplayMode = TimeDisplayMode.YOUTUBE, _should_refresh: bool = True) -> None:
+    def __init__(
+        self,
+        time_display_mode: TimeDisplayMode = TimeDisplayMode.YOUTUBE,
+        pause_icon_type=IconType.NERD,
+        _should_refresh: bool = True
+    ) -> None:
         """Create new PlayerControls.
 
         Args:
@@ -19,6 +22,7 @@ class PlayerControls(Widget):
         """
         super().__init__()
         self.time_display_mode = time_display_mode
+        self.pause_icon_type = pause_icon_type
         self._frame = 0
         self._paused = False
         self._should_refresh = _should_refresh
@@ -54,6 +58,6 @@ class PlayerControls(Widget):
         assert self.metadata != None, 'metadata should be set before compose'
 
         yield Static(
-            ('⏸' if not self._paused else '▶') + ' '
+            icon_type_to_text(self.pause_icon_type, self._paused) + ' '
             + format_time(self.time_display_mode, self._frame, self.metadata.fps, self.metadata.duration)
         )

@@ -3,7 +3,7 @@ from PIL import Image
 import av
 
 from .metadata import VideoMetadata
-from .enums import ImageType, IconType
+from .enums import ImageType
 from .utils import image_type_to_widget, IMAGES_WIDGET_TYPE
 
 def _frame_to_pil(frame) -> Image.Image:
