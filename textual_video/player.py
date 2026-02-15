@@ -19,7 +19,7 @@ from .utils import (
     format_time,
     icon_type_to_text,
 )
-from .enums import ImageType, UpdateStrategy, TimeDisplayMode, IconType
+from .enums import ImageType, TimeDisplayMode, IconType
 
 
 class PauseButton(Static):
@@ -64,6 +64,13 @@ class VideoPlayer(Widget):
         width: 100%;
         height: 100%;
     }
+    .player__frame {
+        width: 100%;
+    }
+    .player__controls {
+        height: 1;
+        width: 100%;
+    }
     '''
 
     def __init__(
@@ -74,7 +81,6 @@ class VideoPlayer(Widget):
         image_type: ImageType = ImageType.SIXEL,
         speed: float = 1,
         on_update: Callable[[int], Any] = lambda frame: None,
-        update_strategy: UpdateStrategy = UpdateStrategy.REACTIVE,
         render_delay: float | None = None,
         fps_decrease_factor: int = 1,
     ):
@@ -87,7 +93,6 @@ class VideoPlayer(Widget):
             image_type (ImageType, optional): Image rendering type. Defaults to ImageType.SIXEL.
             speed (float, optional): Video speed. Defaults to 1.
             on_update (callable, optional): Video update callback. Defaults to None.
-            update_strategy (UpdateStrategy, optional): Image update strategy. Defaults to UpdateStrategy.REACTIVE.
             render_delay (float | None, optional): Average time to render an image. Defaults to None.
             fps_decrease_factor (int, optional): FPS decreasing factor. Defaults to 1.
         """
@@ -101,7 +106,6 @@ class VideoPlayer(Widget):
         self.image_type = image_type
         self.speed = speed
         self.on_frame_update = on_update
-        self.update_strategy = update_strategy
         self.fps_decrease_factor = fps_decrease_factor
         self.render_delay = render_delay or get_render_delay(image_type)
         self.time_display_mode = time_display_mode
@@ -143,24 +147,12 @@ class VideoPlayer(Widget):
             self.pause()
 
     def _refresh_image(self) -> Container | None:
-        if self.update_strategy == UpdateStrategy.REACTIVE:
-            self.refresh(recompose=True)
-        elif self.update_strategy == UpdateStrategy.REMOUNT:
-            container = self.query_one(Container)
-            container.remove_children()
-            return container
+        self.refresh(recompose=True)
 
     def _replace_frame_widget(self, idx: int) -> None:
+        self._refresh_image()
         self.on_frame_update(self.current_frame_index)
-        container = self._refresh_image()
-        if self.update_strategy == UpdateStrategy.REACTIVE:
-            self.frame = self.frames[idx]
-        elif self.update_strategy == UpdateStrategy.REMOUNT:
-            assert container is not None
-            container.mount(self.frames[idx])
-        else:
-            image = self.query_one(SixelImage)
-            image.image = self.frames[idx].image
+        self.frame = self.frames[idx]
         self._update_controls()
 
     def _update_controls(self) -> None:
@@ -175,7 +167,7 @@ class VideoPlayer(Widget):
                     self.time_display_mode,
                     self.current_frame_index,
                     self.metadata.fps,
-                    self.metadata.duration,
+                    self.metadata.duration
                 )
             )
 
@@ -231,33 +223,14 @@ class VideoPlayer(Widget):
 
     def compose(self) -> ComposeResult:
         frame_height = self._frame_height
-        if self.update_strategy == UpdateStrategy.REACTIVE:
-            frame_container = Container(self.frame or Static('loading'), classes='player__frame')
-            frame_container.styles.height = frame_height
-            frame_container.styles.width = "100%"
-            frame_container.styles.margin = 0
-            frame_container.styles.padding = 0
-            yield frame_container
-        elif self.update_strategy == UpdateStrategy.REMOUNT:
-            frame_container = Container(classes='player__frame')
-            frame_container.styles.height = frame_height
-            frame_container.styles.width = "100%"
-            frame_container.styles.margin = 0
-            frame_container.styles.padding = 0
-            yield frame_container
-        else:
-            image_widget = image_type_to_widget(self.image_type)(classes='player__frame')
-            image_widget.styles.height = frame_height
-            image_widget.styles.width = "100%"
-            image_widget.styles.margin = 0
-            image_widget.styles.padding = 0
-            yield image_widget
-        with Horizontal(classes='player__controls') as controls:
-            controls.styles.height = 1
-            controls.styles.width = "100%"
-            controls.styles.margin = 0
-            controls.styles.padding = 0
+
+        frame_container = Container(self.frame or Static('loading'), classes='player__frame')
+        frame_container.styles.height = frame_height
+        yield frame_container
+
+        with Horizontal(classes='player__controls'):
             yield PauseButton(icon_type_to_text(self.pause_icon_type, self.paused))
+
             yield Static(
                 format_time(
                     self.time_display_mode,
@@ -266,5 +239,5 @@ class VideoPlayer(Widget):
                     self.metadata.duration,
                 ),
                 classes='controls__time',
-                id='time_display',
+                id='time_display'
             )
