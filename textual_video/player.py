@@ -99,6 +99,10 @@ class VideoPlayer(Widget):
         on_update: Callable[[int], Any] = lambda frame: None,
         render_delay: float | None = None,
         fps_decrease_factor: int = 1,
+        show_controls: bool = True,
+        show_track: bool = True,
+        track_color: Color = Color.parse('red'),
+        track_disabled_color: Color = Color.parse('gray'),
     ):
         """Create new VideoPlayer.
 
@@ -111,6 +115,10 @@ class VideoPlayer(Widget):
             on_update (callable, optional): Video update callback. Defaults to None.
             render_delay (float | None, optional): Average time to render an image. Defaults to None.
             fps_decrease_factor (int, optional): FPS decreasing factor. Defaults to 1.
+            show_controls (bool, optional): Show player controls (pause button, time etc). Defaults to True.
+            show_track (bool, optional): Show track (line indicating watched time). Defaults to True.
+            track_color (bool, optional): Track color (how many watched). Defaults to Color.parse('red').
+            track_disabled_color (bool, optional): Disabled track color (how many left). Defaults to Color.parse('gray').
         """
         super().__init__()
         path = Path(path)
@@ -118,26 +126,32 @@ class VideoPlayer(Widget):
         assert render_delay is None or render_delay >= 0, 'Render delay should be greater than 0.'
 
         self.video_path = path
+
         self.current_frame_index = 0
         self.frames = []
-        self.image_type = image_type
-        self.speed = speed
-        self.on_frame_update = on_update
         self.fps_decrease_factor = fps_decrease_factor
-        self.render_delay = render_delay or get_render_delay(image_type)
-        self.time_display_mode = time_display_mode
-        self.pause_icon_type = pause_icon_type
-        self._pause_button: PauseButton | None = None
-        self._time_display: Static | None = None
-
+        self.speed = speed
         self.metadata = get_video_metadata(self.video_path)
         self.paused = False
         self._fake_paused = False
 
+        self.image_type = image_type
+        self.on_frame_update = on_update
+        self.render_delay = render_delay or get_render_delay(image_type)
+        self.time_display_mode = time_display_mode
+        self.pause_icon_type = pause_icon_type
+        self.show_controls = show_controls
+        self.show_track = show_track
+        self.track_color = track_color
+        self.track_disabled_color = track_disabled_color
+
+        self._pause_button: PauseButton | None = None
+        self._time_display: Static | None = None
+
         frame_width, frame_height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
         self.styles.width = frame_width
         self._frame_height = frame_height
-        self.styles.height = frame_height + 2
+        self.styles.height = frame_height + int(show_controls) + int(show_track)
 
     def on_mount(self, event: Mount) -> None:
         self.frames = video_to_widgets(self.video_path, type=self.image_type)
@@ -151,9 +165,11 @@ class VideoPlayer(Widget):
             self.metadata.delay_between_frames / self.speed - self.render_delay,
             self._update_frame_index
         )
-        self._pause_button = self.query_one('#pause_button', PauseButton)
-        self._time_display = self.query_one('#time_display', Static)
-        self._update_controls()
+        if self.show_controls:
+            self._pause_button = self.query_one('#pause_button', PauseButton)
+            self._update_controls()
+        if self.show_track:
+            self._time_display = self.query_one('#time_display', Static)
         self._replace_frame_widget(0)
 
 
@@ -174,6 +190,8 @@ class VideoPlayer(Widget):
         self._update_controls()
 
     def _update_controls(self) -> None:
+        assert self.show_controls, 'Controls are hidden'
+
         if not self.metadata:
             return
         if self._pause_button:
@@ -247,21 +265,29 @@ class VideoPlayer(Widget):
         frame_container = Container(self.frame or Static('loading'), classes='player__frame')
         frame_container.styles.height = frame_height
         yield frame_container
-        canvas = Canvas(self.size.width, 2)
-        canvas.draw_line(0, 0, self.size.width * self.current_frame_index // len(self.frames or [0]), 0, Color.parse('red'))
-        yield canvas
 
+        if self.show_track:
+            width = self.size.width
+            watched = width * self.current_frame_index // len(self.frames or [0])
 
-        with Horizontal(classes='player__controls'):
-            yield PauseButton(icon_type_to_text(self.pause_icon_type, self.paused))
+            canvas = Canvas(width, 2)
+            if watched > 0:
+                canvas.draw_line(0, 0, watched, 0, self.track_color) # 0 to watched
+            if watched < width:
+                canvas.draw_line(watched + 1, 0, width, 0, self.track_disabled_color) # watched + 1 to end
+            yield canvas
 
-            yield Static(
-                format_time(
-                    self.time_display_mode,
-                    self.current_frame_index,
-                    self.metadata.fps,
-                    self.metadata.duration,
-                ),
-                classes='controls__time',
-                id='time_display'
-            )
+        if self.show_controls:
+            with Horizontal(classes='player__controls'):
+                yield PauseButton(icon_type_to_text(self.pause_icon_type, self.paused))
+
+                yield Static(
+                    format_time(
+                        self.time_display_mode,
+                        self.current_frame_index,
+                        self.metadata.fps,
+                        self.metadata.duration,
+                    ),
+                    classes='controls__time',
+                    id='time_display'
+                )
