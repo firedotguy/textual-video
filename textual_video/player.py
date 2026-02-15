@@ -26,14 +26,31 @@ class PauseButton(Static):
     class Pressed(Message):
         pass
 
+    class Entered(Message):
+        pass
+
+    class Leaved(Message):
+        pass
+
     def __init__(self, content: str):
         super().__init__(content, id='pause_button', classes='controls__pause_button')
         self.styles.height = 1
         self.styles.max_height = 1
         self.styles.width = 3
+        self._temp_pause = False
 
     def on_click(self) -> None:
+        self._temp_pause = False
         self.post_message(self.Pressed())
+
+    def on_enter(self) -> None:
+        self._temp_pause = True
+        self.post_message(self.Entered())
+
+    def on_leave(self) -> None:
+        if self._temp_pause:
+            self.post_message(self.Leaved())
+            self._temp_pause = False
 
 
 class VideoPlayer(Widget):
@@ -42,6 +59,12 @@ class VideoPlayer(Widget):
     paused = reactive(False)
     BINDINGS = [Binding('space', 'toggle_pause')]
     can_focus = True
+    DEFAULT_CSS = '''
+    Image {
+        width: 100%;
+        height: 100%;
+    }
+    '''
 
     def __init__(
         self,
@@ -88,11 +111,12 @@ class VideoPlayer(Widget):
 
         self.metadata = get_video_metadata(self.video_path)
         self.paused = False
+        self._fake_paused = False
 
         frame_width, frame_height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
         self.styles.width = frame_width
         self._frame_height = frame_height
-        self.styles.height = 'auto'
+        self.styles.height = frame_height + 1  # Точная высота: кадр + контролы
 
     def on_mount(self, event: Mount) -> None:
         self.frames = video_to_widgets(self.video_path, type=self.image_type)
@@ -172,30 +196,67 @@ class VideoPlayer(Widget):
         self._update_controls()
 
     def action_toggle_pause(self) -> None:
+        self._fake_paused = False
         if self.paused:
             self.play()
         else:
             self.pause()
 
+    def _fake_pause(self) -> None:
+        """Fake pause - only stop timer, keep UI showing play state"""
+        self.timer.pause()
+        self._fake_paused = True
+
+    def _fake_resume(self) -> None:
+        """Resume from fake pause"""
+        if self._fake_paused:
+            self.timer.resume()
+            self._fake_paused = False
+
     def on_pause_button_pressed(self, event: PauseButton.Pressed) -> None:
         self.action_toggle_pause()
         event.stop()
+
+    def on_pause_button_entered(self, event: PauseButton.Entered) -> None:
+        if not self.paused:
+            self._fake_pause()
+        event.stop()
+
+    def on_pause_button_leaved(self, event: PauseButton.Leaved) -> None:
+        if self._fake_paused:
+            self._fake_resume()
+        event.stop()
+
+
 
     def compose(self) -> ComposeResult:
         frame_height = self._frame_height
         if self.update_strategy == UpdateStrategy.REACTIVE:
             frame_container = Container(self.frame or Static('loading'), classes='player__frame')
             frame_container.styles.height = frame_height
+            frame_container.styles.width = "100%"
+            frame_container.styles.margin = 0
+            frame_container.styles.padding = 0
             yield frame_container
         elif self.update_strategy == UpdateStrategy.REMOUNT:
             frame_container = Container(classes='player__frame')
             frame_container.styles.height = frame_height
+            frame_container.styles.width = "100%"
+            frame_container.styles.margin = 0
+            frame_container.styles.padding = 0
             yield frame_container
         else:
             image_widget = image_type_to_widget(self.image_type)(classes='player__frame')
             image_widget.styles.height = frame_height
+            image_widget.styles.width = "100%"
+            image_widget.styles.margin = 0
+            image_widget.styles.padding = 0
             yield image_widget
-        with Horizontal(classes='player__controls'):
+        with Horizontal(classes='player__controls') as controls:
+            controls.styles.height = 1
+            controls.styles.width = "100%"
+            controls.styles.margin = 0
+            controls.styles.padding = 0
             yield PauseButton(icon_type_to_text(self.pause_icon_type, self.paused))
             yield Static(
                 format_time(
