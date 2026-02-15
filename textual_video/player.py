@@ -7,14 +7,12 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.containers import Container, Horizontal
 from textual.widgets import Static
-from textual_image.widget import SixelImage
 from textual.binding import Binding
 from textual.reactive import reactive
 
 from .core import get_video_metadata, video_to_widgets
 from .utils import (
     pil_to_textual_sizes,
-    image_type_to_widget,
     get_render_delay,
     format_time,
     icon_type_to_text,
@@ -23,16 +21,25 @@ from .enums import ImageType, TimeDisplayMode, IconType
 
 
 class PauseButton(Static):
+    """Play/pause button"""
     class Pressed(Message):
+        """Button pressed message"""
         pass
 
     class Entered(Message):
+        """Mouse entered button message"""
         pass
 
     class Leaved(Message):
+        """Mouse leaved button message"""
         pass
 
     def __init__(self, content: str):
+        """Create new pause button
+
+        Args:
+            content (str): content
+        """
         super().__init__(content, id='pause_button', classes='controls__pause_button')
         self.styles.height = 1
         self.styles.max_height = 1
@@ -55,10 +62,12 @@ class PauseButton(Static):
 
 class VideoPlayer(Widget):
     """Base VideoPlayer widget with embedded controls."""
+
     frame = reactive(None)
     paused = reactive(False)
     BINDINGS = [Binding('space', 'toggle_pause')]
     can_focus = True
+
     DEFAULT_CSS = '''
     Image {
         width: 100%;
@@ -120,7 +129,7 @@ class VideoPlayer(Widget):
         frame_width, frame_height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
         self.styles.width = frame_width
         self._frame_height = frame_height
-        self.styles.height = frame_height + 1  # Точная высота: кадр + контролы
+        self.styles.height = frame_height + 1
 
     def on_mount(self, event: Mount) -> None:
         self.frames = video_to_widgets(self.video_path, type=self.image_type)
@@ -132,7 +141,7 @@ class VideoPlayer(Widget):
         )
         self.timer = self.set_interval(
             self.metadata.delay_between_frames / self.speed - self.render_delay,
-            self._update_frame_index,
+            self._update_frame_index
         )
         self._pause_button = self.query_one('#pause_button', PauseButton)
         self._time_display = self.query_one('#time_display', Static)
@@ -161,6 +170,7 @@ class VideoPlayer(Widget):
         if self._pause_button:
             self._pause_button.content = icon_type_to_text(self.pause_icon_type, self.paused)
             self._pause_button.refresh()
+
         if self._time_display:
             self._time_display.update(
                 format_time(
@@ -172,22 +182,23 @@ class VideoPlayer(Widget):
             )
 
     def play(self) -> None:
-        """Play/resume video."""
+        """Play/resume video"""
         if self.current_frame_index == self.metadata.frame_count - 1:
-            self.current_frame_index = 0  # start from the beginning
+            self.current_frame_index = 0 # start from the beginning
         self.timer.resume()
         self.paused = False
         self._refresh_image()
         self._update_controls()
 
     def pause(self) -> None:
-        """Pause/stop video."""
+        """Pause video"""
         self.timer.pause()
         self.paused = True
         self._refresh_image()
         self._update_controls()
 
     def action_toggle_pause(self) -> None:
+        """Toggle pause"""
         self._fake_paused = False
         if self.paused:
             self.play()
