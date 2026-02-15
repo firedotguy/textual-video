@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Callable, Any
 
 from textual.app import ComposeResult
+from textual.color import Color
 from textual.events import Mount
 from textual.message import Message
 from textual.widget import Widget
@@ -9,6 +10,7 @@ from textual.containers import Container, Horizontal
 from textual.widgets import Static
 from textual.binding import Binding
 from textual.reactive import reactive
+from textual_canvas import Canvas
 
 from .core import get_video_metadata, video_to_widgets
 from .utils import (
@@ -73,6 +75,11 @@ class VideoPlayer(Widget):
         width: 100%;
         height: 100%;
     }
+    Canvas {
+        width: 100%;
+        height: 1;
+        background: transparent;
+    }
     .player__frame {
         width: 100%;
     }
@@ -112,6 +119,7 @@ class VideoPlayer(Widget):
 
         self.video_path = path
         self.current_frame_index = 0
+        self.frames = []
         self.image_type = image_type
         self.speed = speed
         self.on_frame_update = on_update
@@ -129,7 +137,7 @@ class VideoPlayer(Widget):
         frame_width, frame_height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
         self.styles.width = frame_width
         self._frame_height = frame_height
-        self.styles.height = frame_height + 1
+        self.styles.height = frame_height + 2
 
     def on_mount(self, event: Mount) -> None:
         self.frames = video_to_widgets(self.video_path, type=self.image_type)
@@ -147,6 +155,7 @@ class VideoPlayer(Widget):
         self._time_display = self.query_one('#time_display', Static)
         self._update_controls()
         self._replace_frame_widget(0)
+
 
     def _update_frame_index(self):
         if self.metadata.frame_count > self.current_frame_index + 1:
@@ -238,6 +247,10 @@ class VideoPlayer(Widget):
         frame_container = Container(self.frame or Static('loading'), classes='player__frame')
         frame_container.styles.height = frame_height
         yield frame_container
+        canvas = Canvas(self.size.width, 2)
+        canvas.draw_line(0, 0, self.size.width * self.current_frame_index // len(self.frames or [0]), 0, Color.parse('red'))
+        yield canvas
+
 
         with Horizontal(classes='player__controls'):
             yield PauseButton(icon_type_to_text(self.pause_icon_type, self.paused))
