@@ -33,7 +33,7 @@ def frames_from_video_pyav(
     try:
         vs = container.streams.video[0]
 
-        src_fps = float(vs.average_rate) if vs.average_rate is not None else None
+        src_fps = float(vs.average_rate) if vs.average_rate is not None else 15
         start_frame_idx = int(start_sec * src_fps) if (start_sec and src_fps) else 0
 
         result: list[Image.Image] = []
@@ -73,9 +73,24 @@ def get_video_metadata(video_path: str | Path) -> VideoMetadata:
         VideoMetadata: Metadata
     """
     container = av.open(str(video_path))
-    vs = container.streams.video[0]
-    container.close()
-    return VideoMetadata(float(vs.average_rate or 0), float((vs.duration or 0) * (vs.time_base or 0)), vs.frames, vs.width, vs.height)
+    try:
+        vs = container.streams.video[0]
+
+        # Duration in seconds (may be 0 if not available)
+        duration = float((vs.duration or 0) * (vs.time_base or 0)) if vs.time_base is not None else 0.0
+        frame_count = int(vs.frames or 0)
+
+        # Prefer stream.average_rate; fall back to frame_count / duration when possible.
+        if vs.average_rate:
+            fps = float(vs.average_rate)
+        elif duration > 0 and frame_count > 0:
+            fps = frame_count / duration
+        else:
+            fps = 0.0
+
+        return VideoMetadata(fps, duration, frame_count, vs.width, vs.height)
+    finally:
+        container.close()
 
 
 def video_to_widgets(

@@ -1,15 +1,15 @@
 from textual.geometry import Size
-from textual import log
 
 class VideoMetadata:
     """Video metadata class"""
     def __init__(self, fps: float, duration: float, frame_count: int, width: int, height: int):
-        self.fps = fps
+        # Avoid invalid or zero FPS values that would break timing calculations.
+        self.fps = fps if fps and fps > 0 else 1.0
         self.duration = duration
         self.frame_count = frame_count
         self.size = Size(width, height)
         self.aspect_ratio = width / height
-        self.delay_between_frames = 1 / fps
+        self.delay_between_frames = 1 / self.fps
 
     def decrease_fps(self, factor: int, frames: list | None) -> list | None:
         self.fps /= factor
