@@ -3,13 +3,14 @@ from typing import Callable, Any
 
 from textual.app import ComposeResult
 from textual.color import Color
-from textual.events import Mount
+from textual.events import Mount, MouseDown
 from textual.message import Message
 from textual.widget import Widget
 from textual.containers import Container, Horizontal
 from textual.widgets import Static
 from textual.binding import Binding
 from textual.reactive import reactive
+from textual import on
 from textual_canvas import Canvas
 
 from .core import get_video_metadata, video_to_widgets
@@ -18,6 +19,7 @@ from .utils import (
     get_render_delay,
     format_time,
     icon_type_to_text,
+    get_line_width
 )
 from .enums import ImageType, TimeDisplayMode, IconType
 
@@ -62,6 +64,23 @@ class PauseButton(Static):
             self._temp_pause = False
 
 
+
+class Track(Canvas):
+    def __init__(self, width: int, color: Color, disabled_color: Color):
+        super().__init__(width, 2)
+
+        self._color = color
+        self._disabled_color = disabled_color
+
+        self.styles.width = '100%'
+        self.styles.height = 1
+
+    @on(MouseDown)
+    def on_mouse_down(self, event: MouseDown) -> None:
+        pass #todo
+
+
+
 class VideoPlayer(Widget):
     """Base VideoPlayer widget with embedded controls."""
 
@@ -71,14 +90,9 @@ class VideoPlayer(Widget):
     can_focus = True
 
     DEFAULT_CSS = '''
-    Image {
+    .player__image {
         width: 100%;
         height: 100%;
-    }
-    Canvas {
-        width: 100%;
-        height: 1;
-        background: transparent;
     }
     .player__frame {
         width: 100%;
@@ -154,7 +168,7 @@ class VideoPlayer(Widget):
         self.styles.height = frame_height + int(show_controls) + int(show_track)
 
     def on_mount(self, event: Mount) -> None:
-        self.frames = video_to_widgets(self.video_path, type=self.image_type)
+        self.frames = video_to_widgets(self.video_path, type=self.image_type, classes='player__image')
         if self.fps_decrease_factor > 1:
             self.frames = self.metadata.decrease_fps(self.fps_decrease_factor, self.frames) or []
 
@@ -268,13 +282,13 @@ class VideoPlayer(Widget):
 
         if self.show_track:
             width = self.size.width
-            watched = width * self.current_frame_index // len(self.frames or [0])
+            watched = get_line_width(width, self.current_frame_index, len(self.frames))
 
-            canvas = Canvas(width, 2)
+            canvas = Track(width, self.track_color, self.track_disabled_color)
             if watched > 0:
                 canvas.draw_line(0, 0, watched, 0, self.track_color) # 0 to watched
             if watched < width:
-                canvas.draw_line(watched + 1, 0, width, 0, self.track_disabled_color) # watched + 1 to end
+                canvas.draw_line(watched + int(watched != 0), 0, width, 0, self.track_disabled_color) # watched + 1 to end
             yield canvas
 
         if self.show_controls:

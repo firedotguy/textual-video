@@ -54,7 +54,7 @@ def frames_from_video_pyav(
         container.close()
 
 
-def pil_list_to_widgets(pil_list: list[Image.Image], type: ImageType, kwargs: dict = {}) -> list[IMAGES_WIDGET_TYPE]:
+def pil_list_to_widgets(pil_list: list[Image.Image], type: ImageType, **kwargs) -> list[IMAGES_WIDGET_TYPE]:
     """Convert list of PIL.Images into list of Image instances."""
     images: list = []
     for pil in pil_list:
@@ -98,7 +98,7 @@ def video_to_widgets(
     type: ImageType = ImageType.SIXEL,
     resize: tuple[int, int] | None = None,
     start_sec: float = 0.0,
-    kwargs: dict = {},
+    **kwargs
 ) -> list[IMAGES_WIDGET_TYPE]:
     """Convert video to image widgets.
 
@@ -117,4 +117,4 @@ def video_to_widgets(
         resize=resize,
         start_sec=start_sec,
     )
-    return pil_list_to_widgets(pil_frames, type, kwargs=kwargs)
+    return pil_list_to_widgets(pil_frames, type, **kwargs)

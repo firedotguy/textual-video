@@ -77,3 +77,6 @@ def icon_type_to_text(type: IconType, paused: bool = False) -> str:
             return '▶' if paused else '⏸'
         case IconType.EMOJI:
             return '▶️' if paused else '⏸️'
+
+def get_line_width(width: int, current_frame: int, frames: int) -> int:
+    return width * current_frame // (frames or 1)
