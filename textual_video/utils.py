@@ -78,5 +78,42 @@ def icon_type_to_text(type: IconType, paused: bool = False) -> str:
         case IconType.EMOJI:
             return '▶️' if paused else '⏸️'
 
-def get_line_width(width: int, current_frame: int, frames: int) -> int:
+def get_track_line_width(width: int, current_frame: int, frames: int) -> int:
+    """Get watched track width
+
+    Args:
+        width (int): Total track width
+        current_frame (int): Current frame index
+        frames (int): Frames count
+
+    Returns:
+        int: Watched width
+    """
+
+    # frames count         width
+    # -------------- = -------------
+    # current frame    watched width
+    # frames count * watched width = current frame * width
+    # watched width = current frame * width / frames count
+
     return width * current_frame // (frames or 1)
+
+def get_frame_index_from_track(width: int, x: int, frames: int) -> int:
+    """Get frame index from track X position
+
+    Args:
+        width (int): Track width
+        x (int): x pos
+        frames (int): Frames count
+
+    Returns:
+        int: Frame index
+    """
+
+    # width   frames count
+    # ----- = -------------
+    #   x     current frame
+    # current frame * width = frames count * x
+    # current frame = frames count * x / width
+
+    return frames * x // width

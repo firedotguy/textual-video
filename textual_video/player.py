@@ -1,9 +1,11 @@
 from pathlib import Path
 from typing import Callable, Any
+from typing_extensions import Self
 
 from textual.app import ComposeResult
 from textual.color import Color
 from textual.events import Mount, MouseDown
+from textual.geometry import Region
 from textual.message import Message
 from textual.widget import Widget
 from textual.containers import Container, Horizontal
@@ -19,7 +21,8 @@ from .utils import (
     get_render_delay,
     format_time,
     icon_type_to_text,
-    get_line_width
+    get_track_line_width,
+    get_frame_index_from_track
 )
 from .enums import ImageType, TimeDisplayMode, IconType
 
@@ -63,9 +66,19 @@ class PauseButton(Static):
             self.post_message(self.Leaved())
             self._temp_pause = False
 
+    def refresh(self, *regions: Region, repaint: bool = True, layout: bool = False, recompose: bool = False) -> Self:
+        self.log('refresh', self.content)
+        return super().refresh(*regions, repaint=repaint, layout=layout, recompose=recompose)
+
 
 
 class Track(Canvas):
+    class Clicked(Message):
+        def __init__(self, x: int, width: int) -> None:
+            self.x = x
+            self.width = width
+            super().__init__()
+
     def __init__(self, width: int, color: Color, disabled_color: Color):
         super().__init__(width, 2)
 
@@ -77,7 +90,7 @@ class Track(Canvas):
 
     @on(MouseDown)
     def on_mouse_down(self, event: MouseDown) -> None:
-        pass #todo
+        self.post_message(self.Clicked(event.x, self.size.width))
 
 
 
@@ -181,7 +194,6 @@ class VideoPlayer(Widget):
         )
         if self.show_controls:
             self._pause_button = self.query_one('#pause_button', PauseButton)
-            self._update_controls()
         if self.show_track:
             self._time_display = self.query_one('#time_display', Static)
         self._replace_frame_widget(0)
@@ -194,49 +206,37 @@ class VideoPlayer(Widget):
         else:
             self.pause()
 
-    def _refresh_image(self) -> Container | None:
-        self.refresh(recompose=True)
-
     def _replace_frame_widget(self, idx: int) -> None:
-        self._refresh_image()
         self.on_frame_update(self.current_frame_index)
         self.frame = self.frames[idx]
-        self._update_controls()
+        self.refresh(recompose=True)
 
-    def _update_controls(self) -> None:
-        assert self.show_controls, 'Controls are hidden'
+    def _update_track(self)  -> None:
+        assert self.show_track, 'Track is hidden'
 
-        if not self.metadata:
-            return
-        if self._pause_button:
-            self._pause_button.content = icon_type_to_text(self.pause_icon_type, self.paused)
-            self._pause_button.refresh()
+        width = self.size.width
+        watched = get_track_line_width(width, self.current_frame_index, len(self.frames))
 
-        if self._time_display:
-            self._time_display.update(
-                format_time(
-                    self.time_display_mode,
-                    self.current_frame_index,
-                    self.metadata.fps,
-                    self.metadata.duration
-                )
-            )
+        canvas = self.query_one(Track)
+        if watched > 0:
+            canvas.draw_line(0, 0, watched, 0, self.track_color) # 0 to watched
+        if watched < width:
+            canvas.draw_line(watched + int(watched != 0), 0, width, 0, self.track_disabled_color) # watched + 1 to end
+        canvas.refresh()
 
     def play(self) -> None:
         """Play/resume video"""
         if self.current_frame_index == self.metadata.frame_count - 1:
             self.current_frame_index = 0 # start from the beginning
         self.timer.resume()
+        self.query_one(PauseButton).update(icon_type_to_text(self.pause_icon_type, False))
         self.paused = False
-        self._refresh_image()
-        self._update_controls()
 
     def pause(self) -> None:
         """Pause video"""
         self.timer.pause()
+        self.query_one(PauseButton).update(icon_type_to_text(self.pause_icon_type, True))
         self.paused = True
-        self._refresh_image()
-        self._update_controls()
 
     def action_toggle_pause(self) -> None:
         """Toggle pause"""
@@ -272,6 +272,12 @@ class VideoPlayer(Widget):
         event.stop()
 
 
+    def on_track_clicked(self, event: Track.Clicked) -> None:
+        self.current_frame_index = get_frame_index_from_track(event.width, event.x, len(self.frames))
+        self.frame = self.frames[self.current_frame_index]
+        self._update_track()
+        event.stop()
+
 
     def compose(self) -> ComposeResult:
         frame_height = self._frame_height
@@ -282,7 +288,7 @@ class VideoPlayer(Widget):
 
         if self.show_track:
             width = self.size.width
-            watched = get_line_width(width, self.current_frame_index, len(self.frames))
+            watched = get_track_line_width(width, self.current_frame_index, len(self.frames))
 
             canvas = Track(width, self.track_color, self.track_disabled_color)
             if watched > 0:
