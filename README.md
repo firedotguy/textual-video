@@ -11,10 +11,11 @@ pip install textual-video
 ```
 
 ### Dependencies
- - textual
- - textual-image
- - av
- - numpy
+ - textual (TUI framework)
+ - textual-image (image widget)
+ - textual-canvas (canvas widget, for displaying track)
+ - av (get video frames and metadata)
+ - numpy (av requires)
 
 ## Example
 ```python
@@ -37,8 +38,3 @@ Textual-image provides 4 ways to display image
 | `ImageType.TGP`      | ? (not work in my laptop)                                                               |
 | `ImageType.HALFCELL` | Fast; uses half-cell Unicode blocks.                                                    |
 | `ImageType.UNICODE`  | Fastest; low fidelity, widest compatibility.                                            |
-
-
-## Contributing
- - Please open issues for bugs or feature requests.
- - Create a PR against main and mention related issues.

@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "textual-video"
-version = "0.1.0"
+version = "0.1.1"
 description = "Video playback widgets & controls for Textual (textual-image based)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "av==16.1.0",
-    "textual>=8.0.0",
-    "textual-image>=0.8.5",
-    "textual-canvas>=1.1.0"
+    "av>=16.1.0,<17.0.0",
+    "textual>=8.0.0,<9.0.0",
+    "textual-image>=0.8.5,<1.0.0",
+    "textual-canvas>=1.1.0,<2.0.0",
+    "numpy>=2.4.2,<3.0.0"
 ]

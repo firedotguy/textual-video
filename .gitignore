@@ -3,3 +3,4 @@ __pycache__/
 /example.py
 dist/
 textual_video.egg-info/
+test_venv/
