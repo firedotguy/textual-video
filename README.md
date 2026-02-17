@@ -2,8 +2,8 @@
 
 Textual widget for playing videos in terminal UIs. Based on [textual-image](https://github.com/lnqs/textual-image).
 
-> [!WARNING]
-> This project is freezed/archived due i have no time. Maybe will continue work in summer.
+<!-- > [!WARNING]
+> This project is freezed/archived due i have no time. Maybe will continue work in summer. -->
 
 ## Installation
 > PyPI release soon. Now just clone repo.

@@ -1,4 +1,5 @@
 /venv/
-/examples/__pycache__/
-/textual_video/__pycache__/
+__pycache__/
 /example.py
+dist/
+textual_video.egg-info/
