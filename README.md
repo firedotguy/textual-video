@@ -2,6 +2,9 @@
 
 Textual widget for playing videos in terminal UIs. Based on [textual-image](https://github.com/lnqs/textual-image).
 
+> [!WARNING]
+> This project is freezed/archived due i have no time. Maybe will continue work in summer.
+
 ## Installation
 > PyPI release soon. Now just clone repo.
 
@@ -18,7 +21,7 @@ from textual.app import App, ComposeResult
 
 class ExampleApp(App):
     def compose(self) -> ComposeResult:
-        yield VideoPlayer(r'examples\video.mp4'),
+        yield VideoPlayer(r'examples\video.mp4')
 
 if __name__ == '__main__':
     ExampleApp().run()
