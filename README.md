@@ -16,7 +16,7 @@ pip install textual-video
  - av
  - numpy
 
-## Usage
+## Example
 ```python
 from textual_video.player import VideoPlayer
 from textual.app import App, ComposeResult
@@ -28,42 +28,16 @@ class ExampleApp(App):
 if __name__ == '__main__':
     ExampleApp().run()
 ```
-### Parameters
-| Name                  |             Type | Description                                                 |
-| --------------------- | ---------------- | ----------------------------------------------------------- |
-| `path`                |            `str` | Path to the video file                                      |
-| `image_type`          |      `ImageType` | Rendering backend (e.g. `ImageType.SIXEL`)                  |
-| `speed`               |          `float` | Playback speed multiplier (1.0 = normal)                    |
-| `update_strategy`     | `UpdateStrategy` | How frames are updated (`REPLACE_WIDGET` or `UPDATE_IMAGE`) |
-| `fps_decrease_factor` |            `int` | Downsample FPS by this factor to reduce CPU/rendering load  |
 
-### Enums
-#### ImageType
-Image rendering type
+### Image types
+Textual-image provides 4 ways to display image
 | Member               | Description                                                                             |
 | -------------------- | --------------------------------------------------------------------------------------- |
-| `ImageType.SIXEL`    | Highest fidelity; requires terminal sixel support.                                      |
-| `ImageType.TGP`      | Mid-quality option (depends on implementation).                                         |
+| `ImageType.SIXEL`    | Slow; Highest fidelity; requires terminal sixel support.                                |
+| `ImageType.TGP`      | ? (not work in my laptop)                                                               |
 | `ImageType.HALFCELL` | Fast; uses half-cell Unicode blocks.                                                    |
 | `ImageType.UNICODE`  | Fastest; low fidelity, widest compatibility.                                            |
 
-#### UpdateStrategy
-Image updating strategy
-| Member                     | Description                                                                                     |
-| -------------------------- | ----------------------------------------------------------------------------------------------- |
-| `UpdateStrategy.REMOUNT`   | Create/mount a new widget for each frame and remove the old. Simple but slow and can flicker.   |
-| `UpdateStrategy.REACTIVE`  | Update a reactive field on the player and call `refresh(recompose=True)`. Medium cost.          |
-| `UpdateStrategy.SET_IMAGE` | Keep one mounted widget and call `image` setter. Supports only `ImageType.SIXEL`                |
-
-## FAQ
-1. Video does not start from the beginning, but from the middle or from the end
- - Try incrase `fps_decrease_factor` - your terminal can't cope with frequent changes (escpecially with `ImageType.SIXEL`)
- - Change `ImageType` to more faster (like `HALFCELL`)
-2. Video lagging (has black gaps between update)
- - Use `UpdateStrategy.REACTIVE`
- - Change `ImageType` to more faster
-3. Is there any ways to provide customer control?
- - Сreate a new class inheriting from `textual_video.controls.PlayerControls` and provide it in `control` argument in `VideoPlayer`
 
 ## Contributing
  - Please open issues for bugs or feature requests.
