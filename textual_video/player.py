@@ -16,7 +16,6 @@ from textual_canvas import Canvas
 
 from .core import get_video_metadata, video_to_widgets
 from .utils import (
-    pil_to_textual_sizes,
     get_render_delay,
     format_time,
     icon_type_to_text,
@@ -170,10 +169,10 @@ class VideoPlayer(Widget):
         self.track_color = track_color
         self.track_disabled_color = track_disabled_color
 
-        frame_width, frame_height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
-        self.styles.width = frame_width
-        self._frame_height = frame_height
-        self.styles.height = frame_height + int(show_controls) + int(show_track)
+        # frame_width, frame_height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
+        # self.styles.width = frame_width
+        # self._frame_height = frame_height
+        # self.styles.height = frame_height + int(show_controls) + int(show_track)
 
     def on_mount(self, event: Mount):
         self.run_worker(self._load_video, thread=True)
@@ -277,11 +276,7 @@ class VideoPlayer(Widget):
 
 
     def compose(self) -> ComposeResult:
-        frame_height = self._frame_height
-
-        frame_container = Container(self.frame or LoadingIndicator(), classes='player__frame')
-        frame_container.styles.height = frame_height
-        yield frame_container
+        yield Container(self.frame or LoadingIndicator(), classes='player__frame')
 
         if self.show_track:
             width = self.size.width
