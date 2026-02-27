@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Literal
 
 from textual import on
 from textual.app import ComposeResult
@@ -7,7 +7,7 @@ from textual.binding import Binding
 from textual.color import Color
 from textual.containers import Container, Horizontal
 from textual.events import Mount, MouseDown
-from textual.geometry import Region
+from textual.geometry import Region, Size
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
@@ -16,6 +16,7 @@ from textual_canvas import Canvas
 
 from .core import get_video_metadata, video_to_widgets
 from .utils import (
+    pil_to_textual_sizes,
     get_render_delay,
     format_time,
     icon_type_to_text,
@@ -127,8 +128,11 @@ class VideoPlayer(Widget):
         show_track: bool = True,
         track_color: Color = Color.parse('red'),
         track_disabled_color: Color = Color.parse('gray'),
+        width: int | Literal['auto'] | Literal['real'] = 'auto',
+        height: int | Literal['auto'] | Literal['real'] = 'auto',
     ):
         """Create new VideoPlayer.
+        For width/height - "auto" is maximum from container (given aspect ratio), "real" is real video dimension (divided by 10 for width or 20 for height) and int is your custom value.
 
         Args:
             path (str | Path): Path to video.
@@ -143,6 +147,8 @@ class VideoPlayer(Widget):
             show_track (bool, optional): Show track (line indicating watched time). Defaults to True.
             track_color (bool, optional): Track color (how many watched). Defaults to Color.parse('red').
             track_disabled_color (bool, optional): Disabled track color (how many left). Defaults to Color.parse('gray').
+            width (int | Literal['auto'] | Literal['real']): Player width. Defaults to 'auto'.
+            height (int | Literal['auto'] | Literal['real']): Player height. Defaults to 'auto'.
         """
         super().__init__()
         path = Path(path)
@@ -169,10 +175,24 @@ class VideoPlayer(Widget):
         self.track_color = track_color
         self.track_disabled_color = track_disabled_color
 
-        # frame_width, frame_height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
-        # self.styles.width = frame_width
-        # self._frame_height = frame_height
-        # self.styles.height = frame_height + int(show_controls) + int(show_track)
+        if width == 'real':
+            self.styles.width = self.metadata.size.width // 10
+        else:
+            self.styles.width = width
+        if height == 'real':
+            self.styles.height = self.metadata.size.height // 20
+        else:
+            self.styles.height = height
+
+
+    def get_content_width(self, container: Size, viewport: Size) -> int:
+        if container.width / container.height > self.metadata.textual_aspect_ratio:
+            return int(container.height * self.metadata.textual_aspect_ratio)
+        return container.width
+
+    def get_content_height(self, container: Size, viewport: Size, width: int) -> int:
+        return int(width / self.metadata.textual_aspect_ratio) + int(self.show_controls) + int(self.show_track) - 1
+
 
     def on_mount(self, event: Mount):
         self.run_worker(self._load_video, thread=True)

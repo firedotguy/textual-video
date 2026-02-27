@@ -9,6 +9,7 @@ class VideoMetadata:
         self.frame_count = frame_count
         self.size = Size(width, height)
         self.aspect_ratio = width / height
+        self.textual_aspect_ratio = width / (height / 2)
         self.delay_between_frames = 1 / self.fps
 
     def decrease_fps(self, factor: int, frames: list | None) -> list | None:
