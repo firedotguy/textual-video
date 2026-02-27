@@ -50,7 +50,8 @@ def format_time(mode: TimeDisplayMode, frame: int, fps: float, duration: float) 
         case TimeDisplayMode.MILLISECONDS:
             return f'{round(frame / fps * 60)}/{round(duration * 60)}'
         case TimeDisplayMode.YOUTUBE:
-            seconds = frame / fps
+            seconds = round(frame / fps) # "//" will not work because FPS is float value
+            duration = round(duration)
             if seconds < 60:
                 left = f'0:{_pad_left(seconds)}'
             elif seconds < 3600:
@@ -65,7 +66,7 @@ def format_time(mode: TimeDisplayMode, frame: int, fps: float, duration: float) 
             else:
                 right = f'{duration // 3600}:{_pad_left(duration // 60)}:{_pad_left(duration % 60)}'
 
-            return f'{left}/{right}'
+            return f'{left} / {right}'
 
 def icon_type_to_text(type: IconType, paused: bool = False) -> str:
     match type:

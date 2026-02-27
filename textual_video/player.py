@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Callable, Any
-from typing_extensions import Self
 
 from textual.app import ComposeResult
 from textual.color import Color
@@ -66,8 +65,7 @@ class PauseButton(Static):
             self.post_message(self.Leaved())
             self._temp_pause = False
 
-    def refresh(self, *regions: Region, repaint: bool = True, layout: bool = False, recompose: bool = False) -> Self:
-        self.log('refresh', self.content)
+    def refresh(self, *regions: Region, repaint: bool = True, layout: bool = False, recompose: bool = False):
         return super().refresh(*regions, repaint=repaint, layout=layout, recompose=recompose)
 
 
