@@ -1,17 +1,17 @@
 from pathlib import Path
-from typing import Callable, Any
+from typing import Callable
 
+from textual import on
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.color import Color
+from textual.containers import Container, Horizontal
 from textual.events import Mount, MouseDown
 from textual.geometry import Region
 from textual.message import Message
-from textual.widget import Widget
-from textual.containers import Container, Horizontal
-from textual.widgets import Static
-from textual.binding import Binding
 from textual.reactive import reactive
-from textual import on
+from textual.widget import Widget
+from textual.widgets import Static, LoadingIndicator
 from textual_canvas import Canvas
 
 from .core import get_video_metadata, video_to_widgets
@@ -121,7 +121,7 @@ class VideoPlayer(Widget):
         pause_icon_type: IconType = IconType.UNICODE,
         image_type: ImageType = ImageType.SIXEL,
         speed: float = 1,
-        on_update: Callable[[int], Any] = lambda frame: None,
+        on_update: Callable[[int], None] = lambda frame: None,
         render_delay: float | None = None,
         fps_decrease_factor: int = 1,
         show_controls: bool = True,
@@ -170,15 +170,22 @@ class VideoPlayer(Widget):
         self.track_color = track_color
         self.track_disabled_color = track_disabled_color
 
-        self._pause_button: PauseButton | None = None
-        self._time_display: Static | None = None
-
         frame_width, frame_height = pil_to_textual_sizes(self.metadata.size.width, self.metadata.size.height)
         self.styles.width = frame_width
         self._frame_height = frame_height
         self.styles.height = frame_height + int(show_controls) + int(show_track)
 
-    def on_mount(self, event: Mount) -> None:
+    def on_mount(self, event: Mount):
+        self.run_worker(self._load_video, thread=True)
+
+    def _start_timer(self):
+        self.timer = self.set_interval(
+            self.metadata.delay_between_frames / self.speed - self.render_delay,
+            self._update_frame_index
+        )
+        self._replace_frame_widget(0)
+
+    def _load_video(self) -> None:
         self.frames = video_to_widgets(self.video_path, type=self.image_type, classes='player__image')
         if self.fps_decrease_factor > 1:
             self.frames = self.metadata.decrease_fps(self.fps_decrease_factor, self.frames) or []
@@ -186,15 +193,7 @@ class VideoPlayer(Widget):
         assert self.metadata.delay_between_frames / self.speed - self.render_delay > 0, (
             f'Render delay should be less than {self.metadata.delay_between_frames / self.speed}.'
         )
-        self.timer = self.set_interval(
-            self.metadata.delay_between_frames / self.speed - self.render_delay,
-            self._update_frame_index
-        )
-        if self.show_controls:
-            self._pause_button = self.query_one('#pause_button', PauseButton)
-        if self.show_track:
-            self._time_display = self.query_one('#time_display', Static)
-        self._replace_frame_widget(0)
+        self.call_next(self._start_timer)
 
 
     def _update_frame_index(self):
@@ -280,7 +279,7 @@ class VideoPlayer(Widget):
     def compose(self) -> ComposeResult:
         frame_height = self._frame_height
 
-        frame_container = Container(self.frame or Static('loading'), classes='player__frame')
+        frame_container = Container(self.frame or LoadingIndicator(), classes='player__frame')
         frame_container.styles.height = frame_height
         yield frame_container
 
