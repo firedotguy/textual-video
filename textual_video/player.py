@@ -6,6 +6,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.color import Color
 from textual.containers import Container, Horizontal
+from textual.css.query import NoMatches
 from textual.events import Mount, MouseDown
 from textual.geometry import Region, Size
 from textual.message import Message
@@ -14,16 +15,15 @@ from textual.widget import Widget
 from textual.widgets import Static, LoadingIndicator
 from textual_canvas import Canvas
 
-from .core import get_video_metadata, video_to_widgets
-from .utils import (
-    pil_to_textual_sizes,
+from textual_video.core import get_video_metadata, video_to_widgets
+from textual_video.utils import (
     get_render_delay,
     format_time,
     icon_type_to_text,
     get_track_line_width,
     get_frame_index_from_track
 )
-from .enums import ImageType, TimeDisplayMode, IconType
+from textual_video.enums import ImageType, TimeDisplayMode, IconType
 
 
 class PauseButton(Static):
@@ -164,6 +164,7 @@ class VideoPlayer(Widget):
         self.metadata = get_video_metadata(self.video_path)
         self.paused = False
         self._fake_paused = False
+        self.is_loading = True # "loading" taken by textual
 
         self.image_type = image_type
         self.on_frame_update = on_update
@@ -203,6 +204,7 @@ class VideoPlayer(Widget):
             self._update_frame_index
         )
         self._replace_frame_widget(0)
+        self.is_loading = False
 
     def _load_video(self) -> None:
         self.frames = video_to_widgets(self.video_path, type=self.image_type, classes='player__image')
@@ -242,16 +244,34 @@ class VideoPlayer(Widget):
 
     def play(self) -> None:
         """Play/resume video"""
+        if self.is_loading:
+            return
+
         if self.current_frame_index == self.metadata.frame_count - 1:
             self.current_frame_index = 0 # start from the beginning
         self.timer.resume()
-        self.query_one(PauseButton).update(icon_type_to_text(self.pause_icon_type, False))
+
+        if self.show_controls:
+            try:
+                self.query_one(PauseButton).update(icon_type_to_text(self.pause_icon_type, False))
+            except NoMatches:
+                self.log('No pause button found')
+
         self.paused = False
 
     def pause(self) -> None:
         """Pause video"""
+        if self.is_loading:
+            return
+
         self.timer.pause()
-        self.query_one(PauseButton).update(icon_type_to_text(self.pause_icon_type, True))
+
+        if self.show_controls:
+            try:
+                self.query_one(PauseButton).update(icon_type_to_text(self.pause_icon_type, True))
+            except NoMatches:
+                self.log('No pause button found')
+
         self.paused = True
 
     def action_toggle_pause(self) -> None:

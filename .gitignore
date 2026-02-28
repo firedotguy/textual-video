@@ -1,6 +1,6 @@
 /venv/
 __pycache__/
-examples/
+examples/*
 example.py
 dist/
 textual_video.egg-info/

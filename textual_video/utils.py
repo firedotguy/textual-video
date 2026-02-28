@@ -1,5 +1,5 @@
 from textual_image.widget import SixelImage, UnicodeImage, TGPImage, HalfcellImage
-from .enums import ImageType, TimeDisplayMode, IconType
+from textual_video.enums import ImageType, TimeDisplayMode, IconType
 
 # Textual-image widget types
 IMAGES_WIDGET_TYPE = SixelImage | UnicodeImage | TGPImage | HalfcellImage
