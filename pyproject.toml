@@ -13,5 +13,5 @@ dependencies = [
     "textual>=1.0.0,<9.0.0",
     "textual-image~=0.8.5",
     "textual-canvas~=1.1.0",
-    "numpy>=2.4.2"
+    "numpy"
 ]
