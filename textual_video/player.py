@@ -130,6 +130,7 @@ class VideoPlayer(Widget):
         track_disabled_color: Color = Color.parse('gray'),
         width: int | Literal['auto'] | Literal['real'] = 'auto',
         height: int | Literal['auto'] | Literal['real'] = 'auto',
+        paused: bool = False
     ):
         """Create new VideoPlayer.
         For width/height - "auto" is maximum from container (given aspect ratio), "real" is real video dimension (divided by 10 for width or 20 for height) and int is your custom value.
@@ -149,6 +150,7 @@ class VideoPlayer(Widget):
             track_disabled_color (bool, optional): Disabled track color (how many left). Defaults to Color.parse('gray').
             width (int | Literal['auto'] | Literal['real']): Player width. Defaults to 'auto'.
             height (int | Literal['auto'] | Literal['real']): Player height. Defaults to 'auto'.
+            paused (bool): Is paused by default. Defaults to False.
         """
         super().__init__()
         path = Path(path)
@@ -162,7 +164,7 @@ class VideoPlayer(Widget):
         self.fps_decrease_factor = fps_decrease_factor
         self.speed = speed
         self.metadata = get_video_metadata(self.video_path)
-        self.paused = False
+        self.paused = paused
         self._fake_paused = False
         self.is_loading = True # "loading" taken by textual
 
