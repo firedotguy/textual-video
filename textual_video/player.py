@@ -212,6 +212,7 @@ class VideoPlayer(Widget):
         self.frames = video_to_widgets(self.video_path, type=self.image_type, classes='player__image')
         if self.fps_decrease_factor > 1:
             self.frames = self.metadata.decrease_fps(self.fps_decrease_factor, self.frames) or []
+        self.log(self.metadata.delay_between_frames, self.speed, self.render_delay, self.metadata.delay_between_frames / self.speed - self.render_delay)
 
         assert self.metadata.delay_between_frames / self.speed - self.render_delay > 0, (
             f'Render delay should be less than {self.metadata.delay_between_frames / self.speed}.'

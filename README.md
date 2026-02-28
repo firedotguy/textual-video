@@ -2,6 +2,8 @@
 
 Textual widget for playing videos in terminal UIs. Based on [textual-image](https://github.com/lnqs/textual-image).
 
+![example](screenshots/example.png)
+
 <!-- > [!WARNING]
 > This project is freezed/archived due i have no time. Maybe will continue work in summer. -->
 
@@ -38,3 +40,7 @@ Textual-image provides 4 ways to display image
 | `ImageType.TGP`      | ? (not work in my laptop)                                                               |
 | `ImageType.HALFCELL` | Fast; uses half-cell Unicode blocks.                                                    |
 | `ImageType.UNICODE`  | Fastest; low fidelity, widest compatibility.                                            |
+
+
+### Todo
+![plan](screenshots/plan.png)

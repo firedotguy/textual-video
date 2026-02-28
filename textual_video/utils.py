@@ -6,10 +6,10 @@ IMAGES_WIDGET_TYPE = SixelImage | UnicodeImage | TGPImage | HalfcellImage
 
 # Map of render delays for image types (values for Windows PowerShell, can vary in different terminals)
 RENDER_DELAY = {
-    ImageType.SIXEL: 0.0373,
-    ImageType.HALFCELL: 0.01065,
-    ImageType.UNICODE: 0.00116,
-    ImageType.TGP: 0.00288
+    ImageType.SIXEL: 0,#0.0373,
+    ImageType.HALFCELL: 0,#0.01065,
+    ImageType.UNICODE: 0,#0.00116,
+    ImageType.TGP: 0#0.00288
 }
 
 def textual_to_pil_sizes(width: int, height: int) -> tuple[int, int]:
